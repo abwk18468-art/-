@@ -1,0 +1,17 @@
+{
+  "name": "حسن صدام للمحاسبة",
+  "short_name": "حسن صدام",
+  "description": "برنامج محاسبة وإدارة محل هواتف",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b2239",
+  "theme_color": "#0b2239",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
