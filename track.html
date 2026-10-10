@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>متابعة حالة جهازك</title><meta name="theme-color" content="#000000">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+:root{--bg:#000;--card:#0d0d10;--line:#25252b;--ink:#f4f4f5;--mute:#9a9aa6;--acc:#22d3ee;--ok:#34d399}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Arabic',Cairo,Tahoma,sans-serif;min-height:100vh;display:flex;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px 24px}
+.w{width:100%;max-width:460px}.b{display:flex;align-items:center;gap:12px;margin:8px 0 18px}.lg{width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,#22d3ee,#0e7490);color:#04222c;display:grid;place-items:center;font-weight:800;font-size:22px}
+.b b{display:block;font-size:18px}.b small{color:var(--mute)}
+.c{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px}
+h1{font-size:20px;margin:0 0 4px}.m{color:var(--mute);font-size:14px}
+.st{margin:22px 0 8px}.s{display:flex;gap:12px;align-items:flex-start;position:relative;padding-bottom:18px}
+.s::before{content:'';position:absolute;right:13px;top:28px;bottom:-2px;width:2px;background:var(--line)}.s:last-child::before{display:none}
+.d{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:13px;background:var(--bg)}
+.s.on .d{background:var(--acc);border-color:var(--acc);color:#04222c;font-weight:800;box-shadow:0 0 0 5px #22d3ee22}.s.done .d{background:var(--ok);border-color:var(--ok);color:#04222c}.s.done::before{background:var(--ok)}
+.s span{padding-top:3px;color:var(--mute)}.s.on span,.s.done span{color:var(--ink);font-weight:600}
+.eta{margin-top:6px;padding:12px;border-radius:14px;background:#22d3ee14;border:1px solid #22d3ee33;font-size:14px}
+.btn{display:block;text-align:center;margin-top:14px;padding:13px;border-radius:14px;background:var(--acc);color:#04222c;font-weight:700;text-decoration:none}
+.f{color:var(--mute);font-size:12px;text-align:center;margin-top:14px}.sp{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--acc);border-radius:50%;margin:30px auto;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
+</style></head><body><div class="w">
+<div class="b"><div class="lg">ح</div><div><b id="shop">متابعة الحالة</b><small id="sub"></small></div></div>
+<div class="c" id="card"><div class="sp"></div></div><p class="f">تُحدَّث هذه الصفحة تلقائياً كل نصف دقيقة.</p></div>
+<script>
+var T=new URLSearchParams(location.search).get('t'),ST=['تم استلام جهازك','قيد الإصلاح','جاهز للاستلام','تم التسليم'];
+function esc(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function ago(t){var m=Math.max(0,Math.round((Date.now()-t)/60000));if(m<1)return 'الآن';if(m<60)return 'منذ '+m+' دقيقة';var h=Math.round(m/60);if(h<24)return 'منذ '+h+' ساعة';return 'منذ '+Math.round(h/24)+' يوم'}
+function draw(d){
+  document.getElementById('shop').textContent=d.shop||'متابعة الحالة';document.getElementById('sub').textContent=d.tel?'هاتف: '+d.tel:'';
+  var s=Math.min(3,Math.max(0,d.s||0));
+  var h='<h1>'+esc(d.dev)+'</h1><div class="m">'+(d.nm?'أهلاً '+esc(d.nm)+' • ':'')+'آخر تحديث '+ago(d.upd)+'</div><div class="st">'+ST.map(function(t,i){return '<div class="s '+(i<s?'done':i===s?'on':'')+'"><div class="d">'+(i<s?'✓':i+1)+'</div><span>'+t+'</span></div>'}).join('')+'</div>';
+  if(s===2)h+='<div class="eta">✅ جهازك جاهز. تفضّل باستلامه من المحل.</div>';
+  else if(s<2&&d.eta)h+='<div class="eta">⏱ الموعد المتوقع للتسليم: '+new Date(d.eta).toLocaleDateString('ar-IQ')+'</div>';
+  if(d.tel)h+='<a class="btn" href="tel:'+esc(d.tel)+'">📞 اتصل بالمحل</a>';
+  document.getElementById('card').innerHTML=h;
+}
+async function load(){
+  if(!T){document.getElementById('card').innerHTML='<h1>رابط غير صالح</h1><div class="m">اطلب من المحل رابط المتابعة الصحيح.</div>';return}
+  try{var d=await firebase.firestore().collection('tracks').doc(T).get();if(!d.exists){document.getElementById('card').innerHTML='<h1>لم نجد هذا الطلب</h1><div class="m">قد يكون الرابط قديماً. تواصل مع المحل.</div>';return}draw(d.data())}
+  catch(e){document.getElementById('card').innerHTML='<h1>تعذّر التحميل</h1><div class="m">تحقق من الاتصال وأعد المحاولة.</div>'}
+}
+try{firebase.initializeApp(window.FB_CONFIG);load();setInterval(load,30000)}catch(e){document.getElementById('card').innerHTML='<h1>تعذّر التحميل</h1>'}
+</script></body></html>
